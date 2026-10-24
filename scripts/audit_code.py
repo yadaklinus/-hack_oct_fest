@@ -3,107 +3,180 @@
 scripts/audit_code.py
 
 Purpose:
-  A fast, beginner-friendly static checker for JavaScript and Node.js files.
-  It inspects code for common security vulnerabilities, performance anti-patterns,
-  and outdated syntax, then outputs plain-English suggestions and fixes.
+  A customizable, beginner-friendly static checker for code quality and security.
+  Supports JavaScript, TypeScript, Python, and general code files.
+  Users can specify their language or let the script auto-detect from file extension.
 
 How to run:
-  python scripts/audit_code.py <path-to-javascript-file>
+  python scripts/audit_code.py <file-path> [--lang <language>]
+  python scripts/audit_code.py --demo [--lang <javascript|python>]
 
 Examples:
-  python scripts/audit_code.py server.js
-  python scripts/audit_code.py --demo
+  python scripts/audit_code.py app.js
+  python scripts/audit_code.py main.py
+  python scripts/audit_code.py script.txt --lang python
+  python scripts/audit_code.py --demo --lang javascript
+  python scripts/audit_code.py --demo --lang python
 """
 
 import sys
 import re
 import os
 
-RULES = [
+# Universal rules (apply to any language)
+UNIVERSAL_RULES = [
     {
-        "id": "SEC-001",
-        "category": "Security",
-        "severity": "CRITICAL",
-        "pattern": r"\beval\s*\(",
-        "message": "Dangerous 'eval()' detected. It can execute malicious arbitrary code.",
-        "fix": "Use safer alternatives such as JSON.parse() or dedicated parser libraries."
-    },
-    {
-        "id": "SEC-002",
+        "id": "SEC-SECRET",
         "category": "Security",
         "severity": "HIGH",
-        "pattern": r"(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][A-Za-z0-9_\-]{8,}['\"]",
+        "pattern": r"(api[_-]?key|secret|password|private[_-]?key|token)\s*[:=]\s*['\"][A-Za-z0-9_\-]{8,}['\"]",
         "message": "Possible hardcoded secret or credential detected in source code.",
-        "fix": "Store secrets in an external .env file and access them with process.env.SECRET_NAME."
+        "fix": "Store credentials in an external .env file and load them via environment variables."
     },
     {
-        "id": "SEC-003",
+        "id": "SEC-INJECT",
         "category": "Security",
         "severity": "HIGH",
-        "pattern": r"\bchild_process\b.*\bexec\s*\([^)]*\+",
-        "message": "String concatenation inside child_process.exec() can lead to Command Injection.",
-        "fix": "Use execFile() or spawn() with argument arrays instead of concatenated shell strings."
-    },
-    {
-        "id": "PERF-001",
-        "category": "Performance",
-        "severity": "WARNING",
-        "pattern": r"\bfs\.(readFileSync|writeFileSync|existsSync)\s*\(",
-        "message": "Synchronous file system call detected. This blocks the single-threaded Node.js event loop.",
-        "fix": "Use fs.promises (e.g., await fs.promises.readFile) so other requests are not blocked."
-    },
-    {
-        "id": "PERF-002",
-        "category": "Performance",
-        "severity": "WARNING",
-        "pattern": r"for\s*\([^)]+\)\s*\{[^}]*await\s+",
-        "message": "Sequential 'await' inside a standard loop may slow down batch operations.",
-        "fix": "If iterations are independent, consider Promise.all(items.map(...)) for concurrent execution."
-    },
-    {
-        "id": "STYLE-001",
-        "category": "Code Quality",
-        "severity": "INFO",
-        "pattern": r"\bvar\s+[a-zA-Z_$]",
-        "message": "'var' has function-scoping and hoisting behaviors that cause confusing bugs for beginners.",
-        "fix": "Replace 'var' with 'const' (default) or 'let' (if the value reassigns)."
-    },
-    {
-        "id": "STYLE-002",
-        "category": "Code Quality",
-        "severity": "INFO",
-        "pattern": r"[^!=]==[^=]",
-        "message": "Loose equality '==' performs unexpected type coercion in JavaScript.",
-        "fix": "Use strict equality '===' to verify both type and value."
+        "pattern": r"\b(exec|system|popen)\s*\([^)]*\+",
+        "message": "String concatenation inside command execution may allow Command Injection.",
+        "fix": "Pass arguments as a safe array/list instead of concatenating raw shell strings."
     }
 ]
 
-DEMO_CODE = """// Sample beginner JavaScript code for demonstration
+# Language-specific rules
+LANGUAGE_RULES = {
+    "javascript": [
+        {
+            "id": "JS-SEC-001",
+            "category": "Security",
+            "severity": "CRITICAL",
+            "pattern": r"\beval\s*\(",
+            "message": "Dangerous 'eval()' detected. It can execute arbitrary malicious code.",
+            "fix": "Use JSON.parse() or dedicated parsing libraries instead of eval()."
+        },
+        {
+            "id": "JS-PERF-001",
+            "category": "Performance",
+            "severity": "WARNING",
+            "pattern": r"\bfs\.(readFileSync|writeFileSync)\s*\(",
+            "message": "Synchronous file system call detected. This blocks the single-threaded Node.js event loop.",
+            "fix": "Use fs.promises (e.g., await fs.promises.readFile) so other requests are not blocked."
+        },
+        {
+            "id": "JS-STYLE-001",
+            "category": "Code Quality",
+            "severity": "INFO",
+            "pattern": r"\bvar\s+[a-zA-Z_$]",
+            "message": "'var' is function-scoped and hoisted, which often leads to accidental bugs.",
+            "fix": "Replace 'var' with 'const' (default) or 'let' (if the value reassigns)."
+        },
+        {
+            "id": "JS-STYLE-002",
+            "category": "Code Quality",
+            "severity": "INFO",
+            "pattern": r"[^!=]==[^=]",
+            "message": "Loose equality '==' performs unexpected type coercion in JavaScript.",
+            "fix": "Use strict equality '===' to verify both type and value."
+        }
+    ],
+    "python": [
+        {
+            "id": "PY-SEC-001",
+            "category": "Security",
+            "severity": "CRITICAL",
+            "pattern": r"\b(eval|exec)\s*\(",
+            "message": "Dynamic execution with eval()/exec() is unsafe when handling user input.",
+            "fix": "Use ast.literal_eval() for safe literal evaluation or dedicated serializers."
+        },
+        {
+            "id": "PY-STYLE-001",
+            "category": "Code Quality",
+            "severity": "WARNING",
+            "pattern": r"except\s*:",
+            "message": "Bare 'except:' catches all exceptions, including KeyboardInterrupt and SystemExit.",
+            "fix": "Specify the exact exception type (e.g., 'except ValueError:') or 'except Exception:'."
+        },
+        {
+            "id": "PY-STYLE-002",
+            "category": "Code Quality",
+            "severity": "WARNING",
+            "pattern": r"def\s+[a-zA-Z0-9_]+\s*\([^)]*=\s*(\[\]|\{\})",
+            "message": "Mutable default argument (list/dict) detected. It retains state across calls.",
+            "fix": "Use None as the default argument (e.g., arg=None) and initialize inside the function."
+        }
+    ]
+}
+
+# Aliases for file extensions
+EXT_MAP = {
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".ts": "javascript",
+    ".tsx": "javascript",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
+    ".py": "python"
+}
+
+DEMO_SNIPPETS = {
+    "javascript": """// JavaScript sample demonstration
 const fs = require('fs');
 
-var userRole = "guest";
+var role = "guest";
 const apiKey = "DEMO_KEY_abc123456789_dummy_token";
 
-function authenticateUser(input) {
-  if (userRole == "admin") {
-    eval(input); // Dangerous dynamic execution
+function runAction(command) {
+  if (role == "admin") {
+    eval(command);
   }
   const config = fs.readFileSync('config.json', 'utf8');
   return config;
 }
-"""
+""",
+    "python": """# Python sample demonstration
+import os
 
-def audit_code(content: str, filename: str = "snippet"):
+api_token = "DEMO_TOKEN_abc123456789_dummy_token"
+
+def add_item(item, items=[]):
+    items.append(item)
+    return items
+
+def execute_user_script(user_code):
+    try:
+        eval(user_code)
+    except:
+        pass
+"""
+}
+
+def detect_language(file_path: str, forced_lang: str = None) -> str:
+    if forced_lang:
+        cleaned = forced_lang.lower().strip()
+        if "js" in cleaned or "node" in cleaned or "javascript" in cleaned or "typescript" in cleaned:
+            return "javascript"
+        if "py" in cleaned or "python" in cleaned:
+            return "python"
+        return cleaned
+
+    _, ext = os.path.splitext(file_path)
+    return EXT_MAP.get(ext.lower(), "universal")
+
+def audit_code(content: str, language: str):
     findings = []
     lines = content.splitlines()
 
+    active_rules = list(UNIVERSAL_RULES)
+    if language in LANGUAGE_RULES:
+        active_rules.extend(LANGUAGE_RULES[language])
+
     for line_num, line in enumerate(lines, start=1):
-        # Skip commented lines
         stripped = line.strip()
-        if stripped.startswith("//") or stripped.startswith("*"):
+        # Skip pure comments
+        if stripped.startswith("//") or stripped.startswith("#") or stripped.startswith("*"):
             continue
 
-        for rule in RULES:
+        for rule in active_rules:
             if re.search(rule["pattern"], line, re.IGNORECASE):
                 findings.append({
                     "id": rule["id"],
@@ -117,14 +190,14 @@ def audit_code(content: str, filename: str = "snippet"):
 
     return findings
 
-def print_report(findings, source_label):
+def print_report(findings, source_label, language):
     print("=" * 65)
-    print(f" JS/Node.js Code Audit Report: {source_label}")
+    print(f" Code Audit Report: {source_label} (Language: {language.upper()})")
     print("=" * 65)
 
     if not findings:
         print("[SUCCESS] No critical security or quality issues detected!")
-        print("Your JavaScript code looks clean and adheres to student best practices.")
+        print("Your code looks clean and adheres to recommended student best practices.")
         print("=" * 65)
         return 0
 
@@ -144,27 +217,36 @@ def print_report(findings, source_label):
         print(f"   Fix:     {item['fix']}")
         print("-" * 65)
 
-    print("\nTip: Refer to 'references/best_practices.md' for complete examples and explanations.")
+    print("\nTip: Refer to 'references/best_practices.md' for guidelines tailored to your language.")
     print("=" * 65)
     return 1 if (critical_count + high_count) > 0 else 0
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
-        print("Usage: python scripts/audit_code.py <file.js> | --demo")
-        print("Runs a beginner-friendly security and quality audit on JavaScript/Node.js files.")
+        print("Usage: python scripts/audit_code.py <file-path> [--lang <language>]")
+        print("       python scripts/audit_code.py --demo [--lang <javascript|python>]")
+        print("\nSupported languages: JavaScript, TypeScript, Python, and general code.")
         sys.exit(0)
 
-    arg = sys.argv[1]
-    if arg == "--demo":
-        findings = audit_code(DEMO_CODE, "Built-in Demo Snippet")
-        exit_code = print_report(findings, "Demo Sample File")
+    forced_lang = None
+    if "--lang" in sys.argv:
+        idx = sys.argv.index("--lang")
+        if idx + 1 < len(sys.argv):
+            forced_lang = sys.argv[idx + 1]
+
+    if sys.argv[1] == "--demo":
+        lang = detect_language("", forced_lang or "javascript")
+        demo_text = DEMO_SNIPPETS.get(lang, DEMO_SNIPPETS["javascript"])
+        findings = audit_code(demo_text, lang)
+        exit_code = print_report(findings, f"Demo {lang.capitalize()} Sample", lang)
         sys.exit(exit_code)
 
-    file_path = arg
+    file_path = sys.argv[1]
     if not os.path.exists(file_path):
         print(f"Error: File not found: '{file_path}'")
         sys.exit(2)
 
+    lang = detect_language(file_path, forced_lang)
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -172,8 +254,8 @@ def main():
         print(f"Error reading file '{file_path}': {e}")
         sys.exit(2)
 
-    findings = audit_code(content, file_path)
-    exit_code = print_report(findings, file_path)
+    findings = audit_code(content, lang)
+    exit_code = print_report(findings, file_path, lang)
     sys.exit(exit_code)
 
 if __name__ == "__main__":

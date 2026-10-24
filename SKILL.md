@@ -1,61 +1,66 @@
 ---
-name: js-node-mentor
-description: Guides students in writing secure, efficient JavaScript and Node.js code, performing safety audits, and managing safe git commits. Use when asked "how to make sure my code is right", "review my JavaScript code", "explain how Node.js works", "help me commit my changes", or "check my code for security issues".
+name: student-code-mentor
+description: Guides students and developers in writing clean, secure, and efficient code tailored to any programming language, auditing code for common pitfalls, and managing safe git commits. Use when asked "review my code", "check my code for security issues", "help me commit my changes", "tailor this to Python/JavaScript", or "explain how this code works".
 ---
 
-# JS & Node.js Student Mentor Skill
+# Student Code Mentor Skill
 
-This skill guides students through writing clean, performant, and secure JavaScript and Node.js code while maintaining safe Git habits.
+This customizable skill guides students and developers in writing clean, high-performance, and secure code in any programming language (JavaScript, Python, TypeScript, and more) while maintaining safe Git habits.
 
 ## Step-by-Step Instructions
 
-### Step 1: Explain Concepts Simply
-When a student asks how code works or what a Node.js mechanism does:
-- Use plain language and intuitive analogies (for example, explain the Node.js event loop as a single chef taking orders while kitchen helpers cook in parallel).
-- Avoid overwhelming technical jargon. Focus on cause and effect: what happens if code blocks the thread, and how asynchronous code solves it.
+### Step 1: Detect or Ask for the Programming Language
+1. Inspect the user's project files to detect the active language (for example, `.js` for JavaScript, `.py` for Python, `.ts` for TypeScript).
+2. If the language is not clear or if the user requests a specific language, tailor all explanations, examples, and checks to that language.
 
-### Step 2: Run the Quality & Security Audit Script
-When reviewing code or verifying that a student's solution is secure and proper:
+### Step 2: Explain Concepts Simply
+- Use plain language and beginner-friendly analogies tailored to the language mechanism (such as explaining the Node.js event loop or Python's GIL).
+- Avoid unnecessary jargon. Focus on cause and effect: explain why an approach is unsafe or slow and how the cleaner pattern works.
+
+### Step 3: Run the Multi-Language Audit Script
+When auditing code or checking if a solution is safe and properly structured:
 1. Run the audit script located at `scripts/audit_code.py`:
    ```bash
-   python scripts/audit_code.py <path-to-js-file>
+   python scripts/audit_code.py <path-to-file>
    ```
-2. For demonstration or quick testing, you can also run:
+2. You can also specify the target language explicitly:
    ```bash
-   python scripts/audit_code.py --demo
+   python scripts/audit_code.py <path-to-file> --lang <language>
    ```
-3. Share the findings with the student in a supportive manner. Clearly point out the line number, the hazard, and the beginner-friendly fix.
+3. To run a built-in demo check:
+   ```bash
+   python scripts/audit_code.py --demo --lang <javascript|python>
+   ```
+4. Present the audit findings in a friendly, constructive way: highlight line numbers, explain the risk, and provide the fix.
 
-### Step 3: Reference Best Practices
-Consult `references/best_practices.md` whenever you need in-depth guidelines on:
-- Non-blocking I/O and handling promises with `async/await` and `try...catch`.
-- Safe credential management using `.env` files.
-- Preventing injection attacks by avoiding `eval()` and unsanitized child process execution.
-- Conventional commit conventions (`feat:`, `fix:`, `docs:`, `refactor:`).
+### Step 4: Consult Language & Git Best Practices
+Open `references/best_practices.md` whenever you need in-depth guidance on:
+- Universal security standards (preventing secret leaks and injection).
+- Language-specific patterns for JavaScript, Python, and other stacks.
+- Conventional Commit conventions (`feat:`, `fix:`, `docs:`, `refactor:`).
 
-### Step 4: Manage Git Commits & Confirm Before Pushing
-When helping students record code changes to version control:
-1. Check repository state with `git status` and review modifications with `git diff`.
+### Step 5: Safe Git Commits & Confirmation Rule
+When helping users record changes with Git:
+1. Review status with `git status` and inspect modifications with `git diff`.
 2. Stage only intentional files using `git add <file>`.
-3. Draft a clear conventional commit message following the format in `references/best_practices.md`.
-4. **MANDATORY PUSH RULE**: Never run `git push` automatically. Always stop and explicitly ask the student for confirmation before pushing code to any remote repository:
-   > *"I have created commit `<message>`. Are you ready for me to push this code to GitHub?"*
+3. Draft a conventional commit message following `references/best_practices.md`.
+4. **MANDATORY PUSH CONFIRMATION**: Never run `git push` automatically. Always stop and explicitly ask the developer for confirmation:
+   > *"I have created commit `<message>`. Would you like me to push these changes to GitHub now?"*
 
 ---
 
 ## Examples
 
-### Example 1: Auditing Student Code
-**Student**: *"Can you check if my server.js file is secure and written properly?"*  
+### Example 1: Tailoring to Python
+**Student**: *"I'm working in Python. Can you check my main.py script for bad habits?"*  
 **Agent Action**:
-1. Executes `python scripts/audit_code.py server.js`.
-2. Reads `references/best_practices.md` for recommended async patterns.
-3. Explains to the student why replacing `fs.readFileSync` with `fs.promises.readFile` keeps their server responsive.
+1. Runs `python scripts/audit_code.py main.py --lang python`.
+2. Identifies a mutable default argument (`def add(item, items=[])`) and a bare `except:`.
+3. Explains to the student why `items=None` avoids shared state bugs across function calls.
 
 ### Example 2: Safe Git Commit Flow
-**Student**: *"Help me commit the login fixes I just made."*  
+**Student**: *"I finished my changes. Help me commit them to Git."*  
 **Agent Action**:
-1. Runs `git status` to verify modified files.
-2. Explains the staged changes in simple words.
-3. Creates a commit: `git commit -m "fix: sanitize user input in login route"`.
-4. Prompts the student: *"Your changes are committed locally. Would you like me to push them to GitHub now?"*
+1. Checks modified files using `git status`.
+2. Stages the files and creates commit: `git commit -m "feat: add secure authentication handler"`.
+3. Prompts the student: *"Your changes are committed locally. Are you ready for me to push them to GitHub?"*

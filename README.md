@@ -1,30 +1,30 @@
-# JS & Node.js Student Mentor Skill
+# Student Code Mentor Skill
 
-This skill teaches students how to write secure, clean, and high-performance JavaScript and Node.js code. It also guides students through safe Git version control practices, ensuring code is reviewed before committing and never pushed without permission.
+This skill helps students and developers write clean, secure, and efficient code tailored to any programming language of their choice, including JavaScript, Python, TypeScript, and more. It also coaches users on safe Git practices, ensuring code is reviewed before committing and never pushed without explicit permission.
 
 ---
 
 ## Example Prompts That Trigger This Skill
 
-You can ask your AI agent any of the following questions to trigger this skill:
+You can ask your AI agent any of the following to trigger this skill:
 
-- *"How do I make sure my JavaScript code is secure and properly structured?"*
-- *"Can you explain how the Node.js event loop works in simple words?"*
-- *"Review my server.js file for performance bottlenecks or security risks."*
-- *"Help me commit my changes to Git and write a good commit message."*
-- *"Check my Node.js script for dangerous functions before I run it."*
+- *"Review my code for security issues and suggest best practices."*
+- *"I am using Python for this project. Tailor your advice and code checks to Python."*
+- *"Can you explain how this code works behind the scenes in simple words?"*
+- *"Help me review and commit my changes to Git."*
+- *"Audit my script before I run it on my server."*
 
 ---
 
 ## What Is in This Repository
 
-This repository is built with a simple, standard Agent Skill layout:
+This repository follows the official Agent Skill standard:
 
-- **`SKILL.md`**: The main instruction card that your AI agent always reads first. It tells the agent how to teach concepts gently, when to run audit scripts, and how to safely handle Git commits.
-- **`scripts/`**: Holds small programs that the agent can run directly to perform exact jobs.
-  - **`scripts/audit_code.py`**: A Python scanner that checks JavaScript/Node.js files for dangerous methods (`eval`), hardcoded secrets, blocking synchronous file calls, and outdated syntax.
-- **`references/`**: Contains extra reading material that the agent opens only when in-depth guidance is needed.
-  - **`references/best_practices.md`**: A student-friendly handbook explaining Node.js architecture, security rules, performance tips, and the Conventional Commit standard.
+- **`SKILL.md`**: The instruction card that your AI agent reads first. It instructs the agent to detect your programming language, explain concepts gently, run audits, and follow safe Git rules.
+- **`scripts/`**: Contains small, focused programs that the AI agent runs directly to complete exact jobs.
+  - **`scripts/audit_code.py`**: A multi-language code inspector that scans JavaScript, Python, and other files for security vulnerabilities, secret leaks, performance bottlenecks, and bad patterns.
+- **`references/`**: Contains in-depth reference documentation opened only when extra guidance is needed.
+  - **`references/best_practices.md`**: A beginner-friendly guide covering universal security standards, language-specific rules, and the Conventional Commit standard.
 
 ---
 
@@ -32,32 +32,31 @@ This repository is built with a simple, standard Agent Skill layout:
 
 ### 1. One-Command Install (Recommended)
 
-You can install this skill into your agent with a single command using `npx`:
+You can install this skill into your AI agent with a single command using `npx`:
 
 ```bash
-npx skills add https://github.com/yadaklinus/-hack_oct_fest
+npx skills add yadaklinus/-hack_oct_fest
 ```
-
 
 ### 2. Preview Before Installing
 
-To check the contents of the skill before adding it:
+To inspect the skill's contents before installing:
 
 ```bash
-npx skills add https://github.com/yadaklinus/-hack_oct_fest --list
+npx skills add yadaklinus/-hack_oct_fest --list
 ```
 
 ### 3. Manual Install for Claude Code
 
-If you prefer a manual setup in Claude Code:
+If you prefer to install manually for Claude Code:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/https://github.com/yadaklinus/-hack_oct_fest.git
+   git clone https://github.com/yadaklinus/-hack_oct_fest.git
    ```
 2. Copy the entire folder into your skills directory:
-   - **For a single project**: `.claude/skills/js-node-mentor/`
-   - **For personal / global use**: `~/.claude/skills/js-node-mentor/`
+   - **For a single project**: `.claude/skills/student-code-mentor/`
+   - **For personal / global use**: `~/.claude/skills/student-code-mentor/`
 
 ### 4. Support for Other Agents
 
@@ -70,12 +69,11 @@ Other AI agents and coding tools (such as Cursor, OpenCode, and compatible tools
 1. Install the skill using the command above.
 2. Open your AI agent chat in your project.
 3. Ask the agent:
-   > *"Can you audit my JavaScript code for security issues and help me commit the changes?"*
-4. The agent will read `SKILL.md`, run `scripts/audit_code.py`, point out any issues with simple explanations, and prompt you before running any Git push.
+   > *"I'm working in Python. Can you audit my code for security issues and help me commit the changes?"*
+4. The agent will read `SKILL.md`, run `scripts/audit_code.py` on your code, explain the findings in plain English, and ask for your confirmation before running any Git push.
 
 ---
 
 ## Hacktoberfest Note
 
-This project was built for the **Hacktoberfest** hackathon! Open-source contributions, suggestions, and improvements from developers and students of all experience levels are warmly welcomed. Please check the issues or submit a pull request!
-"# -hack_oct_fest" 
+This project was built for the **Hacktoberfest** hackathon! Open-source contributions, suggestions, and improvements from developers and students of all experience levels are warmly welcomed. Please feel free to open an issue or submit a pull request!
