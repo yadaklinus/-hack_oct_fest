@@ -35,17 +35,16 @@ This repository is built with a simple, standard Agent Skill layout:
 You can install this skill into your agent with a single command using `npx`:
 
 ```bash
-npx skills add YOUR_GITHUB_USERNAME/REPO_NAME
+npx skills add https://github.com/yadaklinus/-hack_oct_fest
 ```
 
-*(Replace `YOUR_GITHUB_USERNAME` and `REPO_NAME` with your actual GitHub username and repository name.)*
 
 ### 2. Preview Before Installing
 
 To check the contents of the skill before adding it:
 
 ```bash
-npx skills add YOUR_GITHUB_USERNAME/REPO_NAME --list
+npx skills add https://github.com/yadaklinus/-hack_oct_fest --list
 ```
 
 ### 3. Manual Install for Claude Code
@@ -54,7 +53,7 @@ If you prefer a manual setup in Claude Code:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/YOUR_GITHUB_USERNAME/REPO_NAME.git
+   git clone https://github.com/https://github.com/yadaklinus/-hack_oct_fest.git
    ```
 2. Copy the entire folder into your skills directory:
    - **For a single project**: `.claude/skills/js-node-mentor/`
